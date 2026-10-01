@@ -12,6 +12,8 @@ Initially supply simulator ground truth to the controller and label that mode in
 
 ## Stage 2: wheel odometry and imperfect measurements
 
+Implemented in the portable harness: a separate wheel-odometry estimator, encoder-velocity noise, wheel-radius mismatch, prescribed wheel slip, paired seed trials, truth-based success evaluation, and comparison artifacts. See [Stage 2 details](stage2.md). These experiments still need replication in the external simulator after the integration milestone above.
+
 Integrate wheel angle increments using the assumed wheel radii and track width to produce planar pose. The controller must consume this estimate; ground truth is available only to the recorder. Independently vary encoder noise, wheel-radius mismatch, and wheel slip. Distinguish true wheel-ground motion from encoder rotation so that a slipping wheel can rotate without producing the expected displacement.
 
 Use common routes, initial conditions, controller tuning, and predetermined seed lists for ground-truth-feedback and odometry-feedback comparisons. Store each seed and complete configuration. Start with one disturbance at a time, then add combined cases. Define failure before running trials: timeout, excessive deviation, or invalid state. Report distributions of tracking and localization errors plus completion rates, retaining failed trials.

@@ -1,8 +1,8 @@
 # Mobile Robot Path Tracking and State Estimation
 
-A C++ pure-pursuit controller and reproducible Python evaluation pipeline for a differential-drive mobile robot. The current implementation is a **Stage 1, ground-truth-feedback baseline** with a portable kinematic simulation harness.
+A C++ pure-pursuit controller and reproducible Python evaluation pipeline for a differential-drive mobile robot. The portable kinematic harness supports a **Stage 1 ground-truth baseline** and **Stage 2 wheel-odometry feedback with controlled disturbances**.
 
-The harness makes the controller runnable without ROS 2 or Gazebo. It uses ideal wheel velocities and exact planar kinematics; it does not simulate rigid-body dynamics, a caster, contact forces, or sensors. Integrating an existing robot model with ROS 2 control and Gazebo remains the next integration milestone. Odometry, IMU fusion, and MPC are planned extensions, not implemented features.
+The harness makes the controller runnable without ROS 2 or Gazebo. It uses commanded shaft velocities, exact planar kinematics, synthetic encoder measurements, and prescribed slip factors; it does not simulate rigid-body dynamics, a caster, or contact forces. Integrating an existing robot model with ROS 2 control and Gazebo remains the next integration milestone. IMU fusion and MPC are planned extensions.
 
 ## Run
 
@@ -13,6 +13,22 @@ make
 make test
 make demo
 ```
+
+Run the Stage 2 feedback comparison:
+
+```bash
+make compare
+```
+
+This runs 90 simulations across three routes and seven scenarios, using five paired seeds for each noisy scenario and one run per mode for each deterministic scenario. It writes `results/stage2/report.md`, `comparison.png`, individual logs, and aggregate metrics. Per-run plots show the first listed seed for each route/scenario/mode.
+
+For a shorter comparison with animated slip behavior:
+
+```bash
+python3 scripts/compare_feedback.py --routes circle --scenarios wheel_slip --animate --output results/slip_demo
+```
+
+Use `--seeds 11 22 33` to set the noisy-trial seed list or `--no-plots` to generate only measurements and reports. See [Stage 2 experiment details](docs/stage2.md) for sensor assumptions, success criteria, and output fields.
 
 To install Python dependencies into a virtual environment if needed:
 
@@ -33,6 +49,7 @@ Run a single simulation without plotting:
 
 ```bash
 ./build/simulate s_curve offset results/single_run
+./build/simulate circle combined results/single_odometry_run odometry 22
 ```
 
 Generated outputs:
@@ -77,7 +94,7 @@ The controller does not regulate final heading independently. Heading error is m
 | Approach gain | 1.2 /s |
 | Run timeout | 60 s |
 
-## Experiments and interpretation
+## Stage 1 experiments and interpretation
 
 Routes are a 6 m straight line, a circle of radius 2 m, and an 8 m S-curve with 1 m amplitude. Each is sampled as 400 segments. `Path` also accepts user-defined waypoint vectors in C++.
 
@@ -97,4 +114,4 @@ Expect small errors when the finite lookahead smooths curved paths, and larger t
 
 ## Next stages
 
-See [the integration and experiment roadmap](docs/roadmap.md) for ROS 2/Gazebo integration, wheel odometry, sensor fusion, and optional MPC. The controller, reusable path definitions, and evaluation outputs are the foundation for those stages.
+See [the integration and experiment roadmap](docs/roadmap.md) for ROS 2/Gazebo integration, sensor fusion, and optional MPC. Stage 2 odometry comparisons currently run in the portable harness; the external simulator integration is still pending.

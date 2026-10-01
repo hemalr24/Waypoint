@@ -44,29 +44,34 @@ def metrics(data, path):
     }
 
 
-def render(data, path, destination, title, animate=False):
+def render(data, path, destination, title, animate=False, feedback="ground_truth"):
     fig = plt.figure(figsize=(11, 6), layout="constrained")
     grid = fig.add_gridspec(2, 2, width_ratios=[1.15, 1])
     map_ax = fig.add_subplot(grid[:, 0])
     error_ax = fig.add_subplot(grid[0, 1])
     speed_ax = fig.add_subplot(grid[1, 1])
     turn_ax = speed_ax.twinx()
-    fig.suptitle(f"{title} | ground-truth feedback (Stage 1)")
+    fig.suptitle(f"{title} | {feedback.replace('_', ' ')} feedback")
     map_ax.plot(path["x"], path["y"], "--", color="0.55", label="Desired route")
     traveled, = map_ax.plot([], [], color="#0072B2", lw=2, label="True trajectory")
     estimated, = map_ax.plot([], [], color="#E69F00", ls=":", lw=2,
-                             label="Estimated trajectory (= truth)")
+                             label="Controller estimate" if feedback == "odometry" else "Controller estimate (= truth)")
     robot, = map_ax.plot([], [], "o", color="#0072B2", ms=8, label="Robot")
     target, = map_ax.plot([], [], "x", color="#CC79A7", ms=9, mew=2, label="Target")
     heading, = map_ax.plot([], [], color="#0072B2", lw=2)
-    all_x = np.concatenate([path["x"], data["true_x"]])
-    all_y = np.concatenate([path["y"], data["true_y"]])
+    all_x = np.concatenate([path["x"], data["true_x"], data["estimated_x"]])
+    all_y = np.concatenate([path["y"], data["true_y"], data["estimated_y"]])
     map_ax.set(xlim=(all_x.min() - 0.8, all_x.max() + 0.8),
                ylim=(all_y.min() - 0.8, all_y.max() + 0.8), xlabel="x [m]", ylabel="y [m]")
     map_ax.set_aspect("equal", adjustable="box")
     map_ax.legend(loc="upper left", fontsize=8)
-    error_ax.plot(data["time"], data["cross_track_error"], color="#D55E00")
-    error_ax.set(xlabel="Time [s]", ylabel="Cross-track error [m]", ylim=(0, None))
+    error_ax.plot(data["time"], data["cross_track_error"], color="#D55E00", label="Cross-track")
+    if feedback == "odometry":
+        error_ax.plot(data["time"], np.hypot(data["true_x"]-data["estimated_x"],
+                                           data["true_y"]-data["estimated_y"]),
+                      color="#E69F00", ls="--", label="Localization")
+        error_ax.legend(fontsize=8)
+    error_ax.set(xlabel="Time [s]", ylabel="Position error [m]", ylim=(0, None))
     speed_ax.plot(data["time"], data["linear"], color="#009E73", label="Forward")
     turn_ax.plot(data["time"], data["angular"], color="#CC79A7", label="Angular")
     speed_ax.set(xlabel="Time [s]", ylabel="Forward command [m/s]")
@@ -88,13 +93,15 @@ def render(data, path, destination, title, animate=False):
                          [row["true_y"], row["true_y"] + 0.3*np.sin(row["true_yaw"])])
         for cursor in cursors:
             cursor.set_xdata([row["time"], row["time"]])
-        status = "complete" if row["complete"] else "timeout" if row["timed_out"] else "running"
+        status = "controller stopped" if row["complete"] else "timeout" if row["timed_out"] else "running"
         clock.set_text(f"t = {row['time']:.2f} s | {status}")
         return traveled, estimated, robot, target, heading, clock, *cursors
 
     update(len(data)-1)
     fig.savefig(destination / "tracking.png", dpi=140)
     if animate:
+        # Freeze the computed layout instead of solving it on every frame.
+        fig.set_layout_engine(None)
         # At most 120 frames keeps artifacts small; timestamp gives simulated time.
         frames = np.unique(np.linspace(0, len(data)-1, min(120, len(data))).astype(int))
         movie = FuncAnimation(fig, update, frames=frames, interval=80, blit=False)

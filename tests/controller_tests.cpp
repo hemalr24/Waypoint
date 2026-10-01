@@ -1,5 +1,6 @@
 #include "route_robot/controller.hpp"
 #include "route_robot/simulation.hpp"
+#include "route_robot/odometry.hpp"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -21,6 +22,19 @@ template<class F> void rejects(F function) {
 
 int main() {
   try {
+    WheelOdometry odom({0, 0, 0}, 0.1, 0.1, 0.4);
+    odom.update(10, 10);
+    near(odom.pose().x, 1, 1e-12, "encoder straight distance");
+    near(odom.pose().y, 0, 1e-12, "encoder straight lateral motion");
+    odom.update(-1, 1);
+    near(odom.pose().yaw, 0.5, 1e-12, "encoder in-place rotation");
+    near(odom.pose().x, 1, 1e-12, "in-place position remains fixed");
+    WheelOdometry quarter({0, 0, 0}, 0.1, 0.1, 0.4);
+    quarter.update(0, 2*3.141592653589793);
+    near(quarter.pose().x, 0.2, 1e-12, "encoder arc x");
+    near(quarter.pose().y, 0.2, 1e-12, "encoder arc y");
+    rejects([] { WheelOdometry bad({0, 0, 0}, 0, 0.1, 0.4); });
+    rejects([&] { odom.update(std::numeric_limits<double>::quiet_NaN(), 0); });
     Path line({{0, 0}, {4, 0}});
     near(line.cross_track_error({2, 1}), 1, 1e-12, "segment projection");
     near(line.cross_track_error({5, 0}), 1, 1e-12, "endpoint distance");
