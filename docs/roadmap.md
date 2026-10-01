@@ -20,7 +20,9 @@ Use common routes, initial conditions, controller tuning, and predetermined seed
 
 ## Stage 3: odometry and IMU fusion
 
-Integrate an existing planar estimator first, with an optional original EKF later. Configure timestamps, frames, covariance, and sensor sources explicitly. Avoid counting correlated odometry-derived quantities as independent evidence. Compare odometry-only and fused estimates against ground truth using the same scenarios and seeds.
+A standalone five-state planar EKF is implemented in the portable harness, fusing wheel forward/turn rates with a simulated gyro. It includes covariance propagation, gyro-bias and symmetric-slip failure cases, paired controller comparisons, and passive estimator comparisons on identical sensor histories. See [Stage 3 details](stage3.md).
+
+For ROS integration, compare this small educational filter with an existing planar estimator. Configure timestamps, frames, covariance, and sensor sources explicitly. Avoid counting correlated odometry-derived quantities as independent evidence. Replicate odometry-only and fused comparisons in the external simulator with the same scenarios and seeds. A future extension could estimate gyro bias, but wheel slip and gyro bias can be difficult to distinguish without another reference.
 
 Wheel odometry and an IMU provide no absolute position reference. Measure whether fusion improves particular errors under particular disturbances; do not presume that it eliminates drift or always improves tracking. Examine heading bias and position drift over longer routes as well as short-run RMS metrics.
 

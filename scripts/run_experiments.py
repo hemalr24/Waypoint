@@ -55,7 +55,7 @@ def render(data, path, destination, title, animate=False, feedback="ground_truth
     map_ax.plot(path["x"], path["y"], "--", color="0.55", label="Desired route")
     traveled, = map_ax.plot([], [], color="#0072B2", lw=2, label="True trajectory")
     estimated, = map_ax.plot([], [], color="#E69F00", ls=":", lw=2,
-                             label="Controller estimate" if feedback == "odometry" else "Controller estimate (= truth)")
+                             label="Controller estimate (= truth)" if feedback == "ground_truth" else "Controller estimate")
     robot, = map_ax.plot([], [], "o", color="#0072B2", ms=8, label="Robot")
     target, = map_ax.plot([], [], "x", color="#CC79A7", ms=9, mew=2, label="Target")
     heading, = map_ax.plot([], [], color="#0072B2", lw=2)
@@ -66,7 +66,7 @@ def render(data, path, destination, title, animate=False, feedback="ground_truth
     map_ax.set_aspect("equal", adjustable="box")
     map_ax.legend(loc="upper left", fontsize=8)
     error_ax.plot(data["time"], data["cross_track_error"], color="#D55E00", label="Cross-track")
-    if feedback == "odometry":
+    if feedback != "ground_truth":
         error_ax.plot(data["time"], np.hypot(data["true_x"]-data["estimated_x"],
                                            data["true_y"]-data["estimated_y"]),
                       color="#E69F00", ls="--", label="Localization")

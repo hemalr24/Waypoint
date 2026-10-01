@@ -81,4 +81,6 @@ The RNG uses `std::mt19937` with `std::normal_distribution`. Replay is reproduci
 
 ## Remaining work
 
-Replicate these interfaces and experiments with an existing ROS 2/Gazebo robot. Then add IMU fusion and compare against wheel odometry with the same evaluation criteria and seed lists. Wheel odometry plus an IMU still lacks an absolute position reference; improvements must be measured rather than presumed.
+Replicate these interfaces and experiments with an existing ROS 2/Gazebo robot. [Stage 3](stage3.md) now adds gyro fusion in the standalone harness with the same evaluation criteria and paired seed lists. Wheel odometry plus an IMU still lacks an absolute position reference; improvements must be measured rather than presumed.
+
+The simulator now also logs a passive EKF and a separate gyro stream in Stage 2 runs. Those fields do not affect Stage 2 controller inputs or physical trajectories; the original encoder RNG stream is unchanged. Stage 2's deterministic/noisy distinction applies to the selected controller and wheel sensor conditions, while the supplementary gyro fields remain stochastic. `paired.csv` now uses explicit `baseline_feedback`, `feedback`, `baseline_success`, and `success` columns to support both stages.

@@ -1,8 +1,8 @@
 # Mobile Robot Path Tracking and State Estimation
 
-A C++ pure-pursuit controller and reproducible Python evaluation pipeline for a differential-drive mobile robot. The portable kinematic harness supports a **Stage 1 ground-truth baseline** and **Stage 2 wheel-odometry feedback with controlled disturbances**.
+A C++ pure-pursuit controller and reproducible Python evaluation pipeline for a differential-drive mobile robot. The portable kinematic harness supports a **Stage 1 ground-truth baseline**, **Stage 2 wheel odometry with disturbances**, and **Stage 3 encoder/gyro fusion with a planar EKF**.
 
-The harness makes the controller runnable without ROS 2 or Gazebo. It uses commanded shaft velocities, exact planar kinematics, synthetic encoder measurements, and prescribed slip factors; it does not simulate rigid-body dynamics, a caster, or contact forces. Integrating an existing robot model with ROS 2 control and Gazebo remains the next integration milestone. IMU fusion and MPC are planned extensions.
+The harness makes the controller runnable without ROS 2 or Gazebo. It uses commanded shaft velocities, exact planar kinematics, synthetic encoder and gyro measurements, and prescribed slip factors; it does not simulate rigid-body dynamics, a caster, or contact forces. Integrating an existing robot model with ROS 2 control and Gazebo remains the next integration milestone. MPC is a planned extension.
 
 ## Run
 
@@ -30,6 +30,15 @@ python3 scripts/compare_feedback.py --routes circle --scenarios wheel_slip --ani
 
 Use `--seeds 11 22 33` to set the noisy-trial seed list or `--no-plots` to generate only measurements and reports. See [Stage 2 experiment details](docs/stage2.md) for sensor assumptions, success criteria, and output fields.
 
+Run Stage 3 sensor fusion:
+
+```bash
+make fusion
+python3 scripts/compare_feedback.py --stage 3 --routes circle --scenarios radius_mismatch --seeds 11 --animate --output results/fusion_demo
+```
+
+The full Stage 3 comparison runs 405 simulations: three routes, nine scenarios, five seeds, and three feedback modes (`ground_truth`, `odometry`, `ekf`). It preserves all failures and adds gyro-bias and symmetric-slip cases. Results are in `results/stage3/`. `same_run_estimators.csv` compares odometry and EKF estimates on identical sensor histories; `paired.csv` compares separate controlled runs. See [the EKF model and Stage 3 methods](docs/stage3.md).
+
 To install Python dependencies into a virtual environment if needed:
 
 ```bash
@@ -50,6 +59,7 @@ Run a single simulation without plotting:
 ```bash
 ./build/simulate s_curve offset results/single_run
 ./build/simulate circle combined results/single_odometry_run odometry 22
+./build/simulate circle radius_mismatch results/single_fused_run ekf 22
 ```
 
 Generated outputs:
@@ -114,4 +124,4 @@ Expect small errors when the finite lookahead smooths curved paths, and larger t
 
 ## Next stages
 
-See [the integration and experiment roadmap](docs/roadmap.md) for ROS 2/Gazebo integration, sensor fusion, and optional MPC. Stage 2 odometry comparisons currently run in the portable harness; the external simulator integration is still pending.
+See [the integration and experiment roadmap](docs/roadmap.md) for ROS 2/Gazebo integration, estimation extensions, and optional MPC. Stage 2 and Stage 3 comparisons currently run in the portable harness; the external simulator integration is still pending.

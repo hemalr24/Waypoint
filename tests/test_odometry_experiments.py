@@ -54,7 +54,7 @@ class OdometryExperiments(unittest.TestCase):
         c, _, _ = self.run_case("encoder_noise", "ground_truth", seed=22)
         d, _, _ = self.run_case("encoder_noise", seed=33)
         for field in a.dtype.names:
-            if field != "controller_us":
+            if field not in ("controller_us", "ekf_us"):
                 np.testing.assert_array_equal(a[field], b[field])
         common = min(len(a), len(c))
         np.testing.assert_array_equal(a["left_encoder_noise"][:common], c["left_encoder_noise"][:common])
